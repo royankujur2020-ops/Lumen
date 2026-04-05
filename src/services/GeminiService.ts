@@ -20,13 +20,14 @@ export class GeminiService {
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY is missing");
-    }
-    this.ai = new GoogleGenAI({ apiKey });
+    this.ai = new GoogleGenAI({ apiKey: apiKey || "" });
   }
 
   async generateResponse(messages: Message[], onChunk: (chunk: string) => void) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+      throw new Error("Gemini API Key is not configured. Please add it to your secrets.");
+    }
     const chat = this.ai.chats.create({
       model: "gemini-3.1-pro-preview",
       config: {

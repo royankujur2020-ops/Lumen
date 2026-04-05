@@ -7,12 +7,21 @@ import { v4 as uuidv4 } from 'uuid';
 
 export default function App() {
   const [sessions, setSessions] = useState<ChatSession[]>(() => {
-    const saved = localStorage.getItem('lumen_sessions');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('lumen_sessions');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to load sessions:", e);
+      return [];
+    }
   });
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(() => {
-    const saved = localStorage.getItem('lumen_current_session_id');
-    return saved || null;
+    try {
+      const saved = localStorage.getItem('lumen_current_session_id');
+      return saved && saved !== "null" ? saved : null;
+    } catch (e) {
+      return null;
+    }
   });
   const [isLoading, setIsLoading] = useState(false);
   const [geminiService] = useState(() => new GeminiService());
