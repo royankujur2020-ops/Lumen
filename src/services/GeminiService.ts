@@ -17,9 +17,9 @@ Core Guidelines:
 
 export class GeminiService {
   async generateResponse(messages: Message[], onChunk: (chunk: string) => void) {
-    const apiKey = process.env.MYGEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.MYGEMINI_API_KEY;
     
-    if (!apiKey || apiKey === "MYGEMINI_API_KEY" || apiKey.trim() === "") {
+    if (!apiKey || apiKey === "GEMINI_API_KEY" || apiKey === "MYGEMINI_API_KEY" || apiKey.trim() === "") {
       throw new Error("Gemini API Key is not configured. Please add your GEMINI_API_KEY to the Secrets panel in AI Studio settings.");
     }
 
