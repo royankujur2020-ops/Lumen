@@ -16,45 +16,50 @@ Core Guidelines:
 7. Tone: Encouraging, professional, witty, and patient.`;
 
 export class GeminiService {
-  private ai: GoogleGenAI;
-
-  constructor() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    this.ai = new GoogleGenAI({ apiKey: apiKey || "" });
-  }
-
   async generateResponse(messages: Message[], onChunk: (chunk: string) => void) {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
-      throw new Error("Gemini API Key is not configured. Please add it to your secrets.");
-    }
-    const chat = this.ai.chats.create({
-      model: "gemini-3.1-pro-preview",
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-      },
-    });
-
-    // Convert history to Gemini format
-    // Note: sendMessageStream only takes the last message, 
-    // but the chat object maintains history if we send them sequentially.
-    // For a better experience, we'll initialize the chat with history.
     
-    const history = messages.slice(0, -1).map(m => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }]
-    }));
+    if (!apiKey || apiKey === "GEMINI_API_KEY" || apiKey.trim() === "") {
+      throw new Error("Gemini API Key is not configured. Please add your GEMINI_API_KEY to the Secrets panel in AI Studio settings.");
+    }
 
-    const lastMessage = messages[messages.length - 1].content;
+    try {
+      const ai = new GoogleGenAI({ apiKey });
+      const chat = ai.chats.create({
+        model: "gemini-3-flash-preview",
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+        },
+      });
 
-    const stream = await chat.sendMessageStream({
-      message: lastMessage,
-    });
+      const history = messages.slice(0, -1).map(m => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }]
+      }));
 
-    for await (const chunk of stream) {
-      if (chunk.text) {
-        onChunk(chunk.text);
+      // Initialize chat with history
+      // Note: The SDK's chat object can be initialized with history
+      // but for simplicity and to avoid potential issues with complex history,
+      // we'll just send the last message. The systemInstruction handles the persona.
+      
+      const lastMessage = messages[messages.length - 1].content;
+
+      const stream = await chat.sendMessageStream({
+        message: lastMessage,
+      });
+
+      for await (const chunk of stream) {
+        const text = chunk.text;
+        if (text) {
+          onChunk(text);
+        }
       }
+    } catch (error: any) {
+      console.error("Gemini API Error:", error);
+      if (error.message?.includes("API_KEY_INVALID")) {
+        throw new Error("The provided Gemini API Key is invalid. Please check your secrets.");
+      }
+      throw new Error(error.message || "An unexpected error occurred while connecting to the AI.");
     }
   }
 }

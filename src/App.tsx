@@ -102,15 +102,16 @@ export default function App() {
             : s
         ));
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI Error:", error);
+      const errorMessage = error.message || "I'm sorry, I encountered an error. Please try again.";
       setSessions(prev => prev.map(s => 
         s.id === sessionId 
           ? { 
               ...s, 
               messages: [
                 ...history, 
-                { role: 'model', content: "I'm sorry, I encountered an error. Please try again.", timestamp: Date.now() }
+                { role: 'model', content: `⚠️ **Error:** ${errorMessage}`, timestamp: Date.now() }
               ] 
             } 
           : s
